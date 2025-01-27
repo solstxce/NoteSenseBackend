@@ -18,18 +18,44 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Load the YOLOv8 model (do this only once when starting the server)
-model = YOLO('best.pt')  # Replace with your model path
+# Load both YOLO models
+coins_model = YOLO('coins.pt')
+notes_model = YOLO('notes.pt')
 
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+@app.post("/predict_coins")
+async def predict_coins(file: UploadFile = File(...)):
     # Read image
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # Run inference
-    results = model(img, conf=0.25)  # Adjust confidence threshold as needed
+    # Run inference with coins model
+    results = coins_model(img, conf=0.25)  # Adjust confidence threshold as needed
+    
+    # Process results
+    result = results[0]
+    predictions = []
+    
+    for box in result.boxes:
+        pred = {
+            "bbox": box.xyxy[0].tolist(),  # Convert bbox to list
+            "confidence": float(box.conf),
+            "class": int(box.cls),
+            "class_name": result.names[int(box.cls)]
+        }
+        predictions.append(pred)
+    
+    return {"predictions": predictions}
+
+@app.post("/predict_notes")
+async def predict_notes(file: UploadFile = File(...)):
+    # Read image
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    # Run inference with notes model
+    results = notes_model(img, conf=0.25)  # Adjust confidence threshold as needed
     
     # Process results
     result = results[0]
