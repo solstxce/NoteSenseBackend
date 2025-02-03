@@ -24,53 +24,65 @@ notes_model = YOLO('notes.pt')
 
 @app.post("/predict_coins")
 async def predict_coins(file: UploadFile = File(...)):
-    # Read image
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    
-    # Run inference with coins model
-    results = coins_model(img, conf=0.25)  # Adjust confidence threshold as needed
-    
-    # Process results
-    result = results[0]
-    predictions = []
-    
-    for box in result.boxes:
-        pred = {
-            "bbox": box.xyxy[0].tolist(),  # Convert bbox to list
-            "confidence": float(box.conf),
-            "class": int(box.cls),
-            "class_name": result.names[int(box.cls)]
-        }
-        predictions.append(pred)
-    
-    return {"predictions": predictions}
+    try:
+        # Read image
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return {"error": "Invalid image file"}
+        
+        # Run inference with coins model
+        results = coins_model(img, conf=0.25)
+        
+        # Process results
+        result = results[0]
+        predictions = []
+        
+        for box in result.boxes:
+            pred = {
+                "bbox": box.xyxy[0].tolist(),
+                "confidence": float(box.conf),
+                "class": int(box.cls),
+                "class_name": result.names[int(box.cls)]
+            }
+            predictions.append(pred)
+        
+        return {"predictions": predictions}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/predict_notes")
 async def predict_notes(file: UploadFile = File(...)):
-    # Read image
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    
-    # Run inference with notes model
-    results = notes_model(img, conf=0.25)  # Adjust confidence threshold as needed
-    
-    # Process results
-    result = results[0]
-    predictions = []
-    
-    for box in result.boxes:
-        pred = {
-            "bbox": box.xyxy[0].tolist(),  # Convert bbox to list
-            "confidence": float(box.conf),
-            "class": int(box.cls),
-            "class_name": result.names[int(box.cls)]
-        }
-        predictions.append(pred)
-    
-    return {"predictions": predictions}
+    try:
+        # Read image
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return {"error": "Invalid image file"}
+        
+        # Run inference with notes model
+        results = notes_model(img, conf=0.25)
+        
+        # Process results
+        result = results[0]
+        predictions = []
+        
+        for box in result.boxes:
+            pred = {
+                "bbox": box.xyxy[0].tolist(),
+                "confidence": float(box.conf),
+                "class": int(box.cls),
+                "class_name": result.names[int(box.cls)]
+            }
+            predictions.append(pred)
+        
+        return {"predictions": predictions}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

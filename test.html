@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Detection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .test-section {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .preview {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Currency Detection Test</h1>
+    
+    <div class="container">
+        <!-- Coins Detection Section -->
+        <div class="test-section">
+            <h2>Coins Detection</h2>
+            <input type="file" id="coinsInput" accept="image/*">
+            <button onclick="detectCurrency('coins')">Detect Coins</button>
+            <div>
+                <img id="coinsPreview" class="preview">
+                <div id="coinsResult" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Notes Detection Section -->
+        <div class="test-section">
+            <h2>Notes Detection</h2>
+            <input type="file" id="notesInput" accept="image/*">
+            <button onclick="detectCurrency('notes')">Detect Notes</button>
+            <div>
+                <img id="notesPreview" class="preview">
+                <div id="notesResult" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preview image before upload
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Setup preview listeners
+        document.getElementById('coinsInput').addEventListener('change', function() {
+            previewImage(this, 'coinsPreview');
+        });
+        document.getElementById('notesInput').addEventListener('change', function() {
+            previewImage(this, 'notesPreview');
+        });
+
+        async function detectCurrency(type) {
+            const inputId = type + 'Input';
+            const resultId = type + 'Result';
+            const file = document.getElementById(inputId).files[0];
+            const resultDiv = document.getElementById(resultId);
+
+            if (!file) {
+                alert('Please select an image first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                resultDiv.textContent = 'Processing...';
+                const response = await fetch(`http://localhost:8080/predict_${type}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html> 
