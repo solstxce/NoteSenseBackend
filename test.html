@@ -110,7 +110,7 @@
 
             try {
                 resultDiv.textContent = 'Processing...';
-                const response = await fetch(`http://localhost:8080/predict_${type}`, {
+                const response = await fetch(`http://144.126.254.154:8080/predict_${type}`, {
                     method: 'POST',
                     body: formData
                 });
